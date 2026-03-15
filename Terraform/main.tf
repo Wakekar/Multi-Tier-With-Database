@@ -7,16 +7,16 @@ data "aws_vpc" "aniket_vpc" {
   id = "vpc-087bcd22867e1366f"
 }
 
-# Existing subnets (two different AZs required)
+# Existing subnets (pick one from each AZ)
 data "aws_subnet" "aniket_subnet_1" {
-  id = "subnet-06c612ff09bcab060"
+  id = "subnet-06c612ff09bcab060"  # ap-south-1a
 }
 
 data "aws_subnet" "aniket_subnet_2" {
-  id = "subnet-0a1b2c3d4e5f6g7h8"
+  id = "subnet-0142550db89a86499"  # ap-south-1b
 }
 
-# Existing Security Group
+# Existing Security Group for EKS
 data "aws_security_group" "aniket_cluster_sg" {
   id = "sg-0ac52e60282081cd9"
 }
@@ -61,7 +61,7 @@ resource "aws_eks_node_group" "aniket" {
   }
 }
 
-# IAM Roles for EKS Cluster
+# IAM Role for EKS Cluster
 resource "aws_iam_role" "aniket_cluster_role" {
   name = "aniket-eks-cluster-role"
 
@@ -86,7 +86,7 @@ resource "aws_iam_role_policy_attachment" "aniket_cluster_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-# IAM Roles for EKS Node Group
+# IAM Role for EKS Node Group
 resource "aws_iam_role" "aniket_node_group_role" {
   name = "aniket-node-group-role"
 
