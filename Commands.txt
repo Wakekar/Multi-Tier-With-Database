@@ -18,4 +18,16 @@ Configure AWS - CLI
 
 Install Terraform
 
--  sudo snap install terraform --classic
+-  sudo snap install terraform --classic      
+>>>   See Terraform Folder in the Repo 
+>>>   Clone the Repo to access the Terraform file in Terminal 
+
+- git clone https://github.com/Wakekar/Multi-Tier-With-Database.git
+ 
+- git branch -a
+- git checkout Aniket    >>   to change the branch
+
+-  terraform init
+-  terraform plan
+-  terraform apply --auto-approve
+
