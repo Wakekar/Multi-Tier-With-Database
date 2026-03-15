@@ -2,24 +2,32 @@ provider "aws" {
   region = "ap-south-1"
 }
 
+# Use existing VPC
 data "aws_vpc" "aniket_vpc" {
   id = "vpc-087bcd22867e1366f"
 }
 
-data "aws_subnet" "aniket_subnet" {
+# Existing subnets (two different AZs required)
+data "aws_subnet" "aniket_subnet_1" {
   id = "subnet-06c612ff09bcab060"
 }
 
+data "aws_subnet" "aniket_subnet_2" {
+  id = "subnet-0a1b2c3d4e5f6g7h8"
+}
+
+# Existing Security Group
 data "aws_security_group" "aniket_cluster_sg" {
   id = "sg-0ac52e60282081cd9"
 }
 
+# EKS Cluster
 resource "aws_eks_cluster" "aniket" {
   name     = "aniket-eks-cluster"
   role_arn = aws_iam_role.aniket_cluster_role.arn
 
   vpc_config {
-    subnet_ids         = [data.aws_subnet.aniket_subnet.id]
+    subnet_ids         = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
     security_group_ids = [data.aws_security_group.aniket_cluster_sg.id]
   }
 
@@ -28,11 +36,12 @@ resource "aws_eks_cluster" "aniket" {
   }
 }
 
+# EKS Node Group
 resource "aws_eks_node_group" "aniket" {
   cluster_name    = aws_eks_cluster.aniket.name
   node_group_name = "aniket-node-group"
   node_role_arn   = aws_iam_role.aniket_node_group_role.arn
-  subnet_ids      = [data.aws_subnet.aniket_subnet.id]
+  subnet_ids      = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
 
   scaling_config {
     desired_size = 3
@@ -52,6 +61,7 @@ resource "aws_eks_node_group" "aniket" {
   }
 }
 
+# IAM Roles for EKS Cluster
 resource "aws_iam_role" "aniket_cluster_role" {
   name = "aniket-eks-cluster-role"
 
@@ -76,6 +86,7 @@ resource "aws_iam_role_policy_attachment" "aniket_cluster_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+# IAM Roles for EKS Node Group
 resource "aws_iam_role" "aniket_node_group_role" {
   name = "aniket-node-group-role"
 
