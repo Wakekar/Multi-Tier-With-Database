@@ -7,7 +7,7 @@ data "aws_vpc" "aniket_vpc" {
   id = "vpc-087bcd22867e1366f"
 }
 
-# Existing subnets in different AZs
+# Existing subnets (one in each AZ)
 data "aws_subnet" "aniket_subnet_1" {
   id = "subnet-06c612ff09bcab060"  # ap-south-1a
 }
