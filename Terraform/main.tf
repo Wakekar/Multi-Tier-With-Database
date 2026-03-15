@@ -7,13 +7,13 @@ data "aws_vpc" "aniket_vpc" {
   id = "vpc-087bcd22867e1366f"
 }
 
-# Existing subnets (pick one from each AZ)
+# Public subnets (one from each AZ)
 data "aws_subnet" "aniket_subnet_1" {
   id = "subnet-06c612ff09bcab060"  # ap-south-1a
 }
 
 data "aws_subnet" "aniket_subnet_2" {
-  id = "subnet-0142550db89a86499"  # ap-south-1b
+  id = "subnet-07f0e2c7f4dc78c3a"  # ap-south-1b
 }
 
 # Existing Security Group for EKS
