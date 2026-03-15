@@ -7,7 +7,7 @@ data "aws_vpc" "aniket_vpc" {
   id = "vpc-087bcd22867e1366f"
 }
 
-# Public subnets (one from each AZ)
+# Existing subnets (one from each AZ)
 data "aws_subnet" "aniket_subnet_1" {
   id = "subnet-06c612ff09bcab060"  # ap-south-1a
 }
@@ -23,16 +23,19 @@ data "aws_security_group" "aniket_cluster_sg" {
 
 # EKS Cluster
 resource "aws_eks_cluster" "aniket" {
-  name     = "aniket-eks-cluster"
+  name     = var.cluster_name
   role_arn = aws_iam_role.aniket_cluster_role.arn
 
   vpc_config {
-    subnet_ids         = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
+    subnet_ids         = [
+      data.aws_subnet.aniket_subnet_1.id,
+      data.aws_subnet.aniket_subnet_2.id
+    ]
     security_group_ids = [data.aws_security_group.aniket_cluster_sg.id]
   }
 
   tags = {
-    Name = "aniket-eks-cluster"
+    Name = var.cluster_name
   }
 }
 
@@ -41,7 +44,10 @@ resource "aws_eks_node_group" "aniket" {
   cluster_name    = aws_eks_cluster.aniket.name
   node_group_name = "aniket-node-group"
   node_role_arn   = aws_iam_role.aniket_node_group_role.arn
-  subnet_ids      = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
+  subnet_ids      = [
+    data.aws_subnet.aniket_subnet_1.id,
+    data.aws_subnet.aniket_subnet_2.id
+  ]
 
   scaling_config {
     desired_size = 3
@@ -52,7 +58,7 @@ resource "aws_eks_node_group" "aniket" {
   instance_types = ["t2.large"]
 
   remote_access {
-    ec2_ssh_key = "thinkpad-2"
+    ec2_ssh_key               = var.ssh_key_name
     source_security_group_ids = [data.aws_security_group.aniket_cluster_sg.id]
   }
 
