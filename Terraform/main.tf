@@ -21,8 +21,8 @@ data "aws_security_group" "aniket_cluster_sg" {
   id = "sg-0ac52e60282081cd9"
 }
 
-# IAM Role for EKS Cluster (new unique name)
-resource "aws_iam_roles" "aniket_cluster_role_v3" {
+# IAM Role for EKS Cluster
+resource "aws_iam_role" "aniket_cluster_role_v3" {
   name = "aniket-eks-cluster-role-v3"
 
   assume_role_policy = <<EOF
@@ -39,13 +39,13 @@ resource "aws_iam_roles" "aniket_cluster_role_v3" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "aniket_cluster_role_policy_v2" {
-  role       = aws_iam_role.aniket_cluster_role_v2.name
+resource "aws_iam_role_policy_attachment" "aniket_cluster_role_policy_v3" {
+  role       = aws_iam_role.aniket_cluster_role_v3.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-# IAM Role for EKS Node Group (new unique name)
-resource "aws_iam_roles" "aniket_node_group_role_v3" {
+# IAM Role for EKS Node Group
+resource "aws_iam_role" "aniket_node_group_role_v3" {
   name = "aniket-node-group-role-v3"
 
   assume_role_policy = <<EOF
@@ -62,25 +62,25 @@ resource "aws_iam_roles" "aniket_node_group_role_v3" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "aniket_node_group_role_policy_v2" {
-  role       = aws_iam_role.aniket_node_group_role_v2.name
+resource "aws_iam_role_policy_attachment" "aniket_node_group_role_policy_v3" {
+  role       = aws_iam_role.aniket_node_group_role_v3.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "aniket_node_group_cni_policy_v2" {
-  role       = aws_iam_role.aniket_node_group_role_v2.name
+resource "aws_iam_role_policy_attachment" "aniket_node_group_cni_policy_v3" {
+  role       = aws_iam_role.aniket_node_group_role_v3.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
-resource "aws_iam_role_policy_attachment" "aniket_node_group_registry_policy_v2" {
-  role       = aws_iam_role.aniket_node_group_role_v2.name
+resource "aws_iam_role_policy_attachment" "aniket_node_group_registry_policy_v3" {
+  role       = aws_iam_role.aniket_node_group_role_v3.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
 # EKS Cluster
 resource "aws_eks_cluster" "aniket" {
   name     = "aniket-eks-cluster"
-  role_arn = aws_iam_role.aniket_cluster_role_v2.arn
+  role_arn = aws_iam_role.aniket_cluster_role_v3.arn
 
   vpc_config {
     subnet_ids         = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
@@ -92,11 +92,11 @@ resource "aws_eks_cluster" "aniket" {
   }
 }
 
-# EKS Node Group (new name)
-resource "aws_eks_node_group" "aniket_node_group_v2" {
+# EKS Node Group
+resource "aws_eks_node_group" "aniket_node_group_v3" {
   cluster_name    = aws_eks_cluster.aniket.name
-  node_group_name = "aniket-node-group-v2"
-  node_role_arn   = aws_iam_role.aniket_node_group_role_v2.arn
+  node_group_name = "aniket-node-group-v3"
+  node_role_arn   = aws_iam_role.aniket_node_group_role_v3.arn
   subnet_ids      = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
 
   scaling_config {
@@ -113,6 +113,6 @@ resource "aws_eks_node_group" "aniket_node_group_v2" {
   }
 
   tags = {
-    Name = "aniket-node-group-v2"
+    Name = "aniket-node-group-v3"
   }
 }
