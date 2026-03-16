@@ -22,8 +22,8 @@ data "aws_security_group" "aniket_cluster_sg" {
 }
 
 # IAM Role for EKS Cluster (new unique name)
-resource "aws_iam_role" "aniket_cluster_role_v2" {
-  name = "aniket-eks-cluster-role-v2"
+resource "aws_iam_roles" "aniket_cluster_role_v3" {
+  name = "aniket-eks-cluster-role-v3"
 
   assume_role_policy = <<EOF
 {
@@ -45,8 +45,8 @@ resource "aws_iam_role_policy_attachment" "aniket_cluster_role_policy_v2" {
 }
 
 # IAM Role for EKS Node Group (new unique name)
-resource "aws_iam_role" "aniket_node_group_role_v2" {
-  name = "aniket-node-group-role-v2"
+resource "aws_iam_roles" "aniket_node_group_role_v3" {
+  name = "aniket-node-group-role-v3"
 
   assume_role_policy = <<EOF
 {
