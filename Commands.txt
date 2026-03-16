@@ -1,3 +1,6 @@
+######################################################################################################################################
+
+
 ==>>   Installing AWS-CLI
 
 sudo apt install unzip
@@ -31,3 +34,11 @@ Install Terraform
 -  terraform plan
 -  terraform apply --auto-approve
 
+-------------------------------------------------------------------------------------------------------------------------------------
+
+>>>>     If infra has existing roles , then Import the existing roles into Terraform state.
+         Run these commands:
+-  terraform import aws_iam_role.aniket_cluster_role aniket-eks-cluster-role
+-  terraform import aws_iam_role.aniket_node_group_role aniket-node-group-role
+>>>     After that run Terraform again
+-   terraform apply -auto-approve
