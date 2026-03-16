@@ -3,7 +3,7 @@ output "cluster_id" {
 }
 
 output "node_group_id" {
-  value = aws_eks_node_group.aniket.id
+  value = aws_eks_node_group.aniket_node_group_v3.id
 }
 
 output "vpc_id" {
