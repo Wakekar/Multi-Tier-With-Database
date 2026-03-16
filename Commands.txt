@@ -42,3 +42,39 @@ Install Terraform
 -  terraform import aws_iam_role.aniket_node_group_role aniket-node-group-role
 >>>     After that run Terraform again
 -   terraform apply -auto-approve
+
+
+#########################################################################################################################################
+
+
+Create 2  Instances with same configuration    
+1. Nexus 
+2. SonaQube       >>>   update and customize them 
+ 
+1.  in  Nexus Instance  >>>         install docker 
+-   apt  install docker.io  -y
+exit (without using Root User)
+-   sudo docker run -d --name Nexus3 -p 8081:8081 sonatype/nexus3 
+
+2. Setup the SOnarQube   >>>-       Install Docker to Setup Sonarqube Server
+-   apt  install docker.io  -y
+-   sudo docker run -d --name sonardevops -p 9000:9000 sonarqube:lts-community
+
+1. In Nexus Tab   >>>  Access the Nexus   
+
+>>>   COPY the Public IP of Nexus instance and Port   access in Browser 
+>>>   User ID is admin and for passsword  use following commands
+
+-   sudo docker exec -it c716eb29e04e /bin/bash
+-   ls
+>>   you get >-- nexus  sonatype-work  start-nexus-repository-manager.sh
+-    cd sonatype-work/nexus3/
+-    ls
+>>   you will get >--  admin.password  blobs  clean_cache  db  downloads  etc  javaprefs  keystores  log  restore-from-backup  tmp
+-   cat admin.password
+>>   you get Password like : 15798a77-482e-483c-b1a5-dd10f7891a6dbash-5.1$     but copy without 'bash-5.1$'
+>>   login to Nexus Repo 
+
+
+
+
