@@ -21,7 +21,7 @@ data "aws_security_group" "aniket_cluster_sg" {
   id = "sg-0ac52e60282081cd9"
 }
 
-# IAM Role for EKS Cluster
+# IAM Role for EKS Cluster (already exists, Terraform will use it)
 resource "aws_iam_role" "aniket_cluster_role" {
   name = "aniket-eks-cluster-role"
 
@@ -44,7 +44,7 @@ resource "aws_iam_role_policy_attachment" "aniket_cluster_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-# IAM Role for EKS Node Group
+# IAM Role for Node Group (already exists, Terraform will use it)
 resource "aws_iam_role" "aniket_node_group_role" {
   name = "aniket-node-group-role"
 
@@ -92,10 +92,10 @@ resource "aws_eks_cluster" "aniket" {
   }
 }
 
-# EKS Node Group
-resource "aws_eks_node_group" "aniket" {
+# ✅ New Node Group with different name & tags
+resource "aws_eks_node_group" "aniket_new" {
   cluster_name    = aws_eks_cluster.aniket.name
-  node_group_name = "aniket-node-group"
+  node_group_name = "aniket-node-group-new"
   node_role_arn   = aws_iam_role.aniket_node_group_role.arn
   subnet_ids      = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
 
@@ -113,6 +113,7 @@ resource "aws_eks_node_group" "aniket" {
   }
 
   tags = {
-    Name = "aniket-node-group"
+    Name        = "aniket-node-group-new"
+    Environment = "Dev"
   }
 }
