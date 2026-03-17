@@ -2,27 +2,81 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# Use existing VPC
-data "aws_vpc" "aniket_vpc" {
-  id = "vpc-087bcd22867e1366f"
+############################
+# VPC
+############################
+data "aws_vpc" "devops_vpc" {
+  id = "vpc-0adb31ddbaf14d3bf"
 }
 
-# Existing subnets
-data "aws_subnet" "aniket_subnet_1" {
-  id = "subnet-06c612ff09bcab060"
+############################
+# PRIVATE SUBNETS (3 AZs)
+############################
+data "aws_subnet" "private_a" {
+  id = "subnet-04b8571a304250a1b"
 }
 
-data "aws_subnet" "aniket_subnet_2" {
-  id = "subnet-0142550db89a86499"
+data "aws_subnet" "private_b" {
+  id = "subnet-0b9b8056f6cdecac2"
 }
 
-# Existing Security Group for EKS
-data "aws_security_group" "aniket_cluster_sg" {
-  id = "sg-0ac52e60282081cd9"
+data "aws_subnet" "private_c" {
+  id = "subnet-0ee33767f9e231926"
 }
 
-# IAM Role for EKS Cluster
-resource "aws_iam_role" "aniket_cluster_role_v3" {
+############################
+# TAGS REQUIRED FOR EKS
+############################
+
+# Cluster ownership tag
+resource "aws_ec2_tag" "private_a_cluster" {
+  resource_id = data.aws_subnet.private_a.id
+  key   = "kubernetes.io/cluster/aniket-eks-cluster"
+  value = "shared"
+}
+
+resource "aws_ec2_tag" "private_b_cluster" {
+  resource_id = data.aws_subnet.private_b.id
+  key   = "kubernetes.io/cluster/aniket-eks-cluster"
+  value = "shared"
+}
+
+resource "aws_ec2_tag" "private_c_cluster" {
+  resource_id = data.aws_subnet.private_c.id
+  key   = "kubernetes.io/cluster/aniket-eks-cluster"
+  value = "shared"
+}
+
+# Internal LoadBalancer support
+resource "aws_ec2_tag" "private_a_elb" {
+  resource_id = data.aws_subnet.private_a.id
+  key   = "kubernetes.io/role/internal-elb"
+  value = "1"
+}
+
+resource "aws_ec2_tag" "private_b_elb" {
+  resource_id = data.aws_subnet.private_b.id
+  key   = "kubernetes.io/role/internal-elb"
+  value = "1"
+}
+
+resource "aws_ec2_tag" "private_c_elb" {
+  resource_id = data.aws_subnet.private_c.id
+  key   = "kubernetes.io/role/internal-elb"
+  value = "1"
+}
+
+############################
+# SECURITY GROUP
+############################
+data "aws_security_group" "devops_sg" {
+  id = "sg-0bd9eba5479b04af8"
+}
+
+############################
+# IAM ROLES
+############################
+resource "aws_iam_role" "cluster_role" {
   name = "aniket-eks-cluster-role-v3"
 
   assume_role_policy = <<EOF
@@ -39,13 +93,12 @@ resource "aws_iam_role" "aniket_cluster_role_v3" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "aniket_cluster_role_policy_v3" {
-  role       = aws_iam_role.aniket_cluster_role_v3.name
+resource "aws_iam_role_policy_attachment" "cluster_policy" {
+  role       = aws_iam_role.cluster_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-# IAM Role for EKS Node Group
-resource "aws_iam_role" "aniket_node_group_role_v3" {
+resource "aws_iam_role" "node_role" {
   name = "aniket-node-group-role-v3"
 
   assume_role_policy = <<EOF
@@ -62,55 +115,81 @@ resource "aws_iam_role" "aniket_node_group_role_v3" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "aniket_node_group_role_policy_v3" {
-  role       = aws_iam_role.aniket_node_group_role_v3.name
+resource "aws_iam_role_policy_attachment" "node_policy" {
+  role       = aws_iam_role.node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "aniket_node_group_cni_policy_v3" {
-  role       = aws_iam_role.aniket_node_group_role_v3.name
+resource "aws_iam_role_policy_attachment" "cni_policy" {
+  role       = aws_iam_role.node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
-resource "aws_iam_role_policy_attachment" "aniket_node_group_registry_policy_v3" {
-  role       = aws_iam_role.aniket_node_group_role_v3.name
+resource "aws_iam_role_policy_attachment" "ecr_policy" {
+  role       = aws_iam_role.node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-# EKS Cluster
+############################
+# EKS CLUSTER
+############################
 resource "aws_eks_cluster" "aniket" {
   name     = "aniket-eks-cluster"
-  role_arn = aws_iam_role.aniket_cluster_role_v3.arn
+  role_arn = aws_iam_role.cluster_role.arn
 
   vpc_config {
-    subnet_ids         = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
-    security_group_ids = [data.aws_security_group.aniket_cluster_sg.id]
+    subnet_ids = [
+      data.aws_subnet.private_a.id,
+      data.aws_subnet.private_b.id,
+      data.aws_subnet.private_c.id
+    ]
+
+    security_group_ids      = [data.aws_security_group.devops_sg.id]
+    endpoint_private_access = true
+    endpoint_public_access  = true
   }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.cluster_policy
+  ]
 
   tags = {
     Name = "aniket-eks-cluster"
   }
 }
 
-# EKS Node Group
-resource "aws_eks_node_group" "aniket_node_group_v3" {
+############################
+# NODE GROUP (multi-AZ)
+############################
+resource "aws_eks_node_group" "node_group" {
   cluster_name    = aws_eks_cluster.aniket.name
   node_group_name = "aniket-node-group-v3"
-  node_role_arn   = aws_iam_role.aniket_node_group_role_v3.arn
-  subnet_ids      = [data.aws_subnet.aniket_subnet_1.id, data.aws_subnet.aniket_subnet_2.id]
+  node_role_arn   = aws_iam_role.node_role.arn
+
+  subnet_ids = [
+    data.aws_subnet.private_a.id,
+    data.aws_subnet.private_b.id,
+    data.aws_subnet.private_c.id
+  ]
 
   scaling_config {
     desired_size = 3
-    max_size     = 3
-    min_size     = 3
+    max_size     = 6
+    min_size     = 2
   }
 
   instance_types = ["c7i-flex.large"]
 
   remote_access {
     ec2_ssh_key               = var.ssh_key_name
-    source_security_group_ids = [data.aws_security_group.aniket_cluster_sg.id]
+    source_security_group_ids = [data.aws_security_group.devops_sg.id]
   }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.node_policy,
+    aws_iam_role_policy_attachment.cni_policy,
+    aws_iam_role_policy_attachment.ecr_policy
+  ]
 
   tags = {
     Name = "aniket-node-group-v3"
