@@ -10,7 +10,7 @@ data "aws_vpc" "devops_vpc" {
 }
 
 ############################
-# PRIVATE SUBNETS (3 AZs)
+# PRIVATE SUBNETS (2 AZs)
 ############################
 data "aws_subnet" "private_a" {
   id = "subnet-04b8571a304250a1b"
@@ -20,15 +20,9 @@ data "aws_subnet" "private_b" {
   id = "subnet-0b9b8056f6cdecac2"
 }
 
-data "aws_subnet" "private_c" {
-  id = "subnet-0ee33767f9e231926"
-}
-
 ############################
 # TAGS REQUIRED FOR EKS
 ############################
-
-# Cluster ownership tag
 resource "aws_ec2_tag" "private_a_cluster" {
   resource_id = data.aws_subnet.private_a.id
   key   = "kubernetes.io/cluster/aniket-eks-cluster"
@@ -41,13 +35,6 @@ resource "aws_ec2_tag" "private_b_cluster" {
   value = "shared"
 }
 
-resource "aws_ec2_tag" "private_c_cluster" {
-  resource_id = data.aws_subnet.private_c.id
-  key   = "kubernetes.io/cluster/aniket-eks-cluster"
-  value = "shared"
-}
-
-# Internal LoadBalancer support
 resource "aws_ec2_tag" "private_a_elb" {
   resource_id = data.aws_subnet.private_a.id
   key   = "kubernetes.io/role/internal-elb"
@@ -56,12 +43,6 @@ resource "aws_ec2_tag" "private_a_elb" {
 
 resource "aws_ec2_tag" "private_b_elb" {
   resource_id = data.aws_subnet.private_b.id
-  key   = "kubernetes.io/role/internal-elb"
-  value = "1"
-}
-
-resource "aws_ec2_tag" "private_c_elb" {
-  resource_id = data.aws_subnet.private_c.id
   key   = "kubernetes.io/role/internal-elb"
   value = "1"
 }
@@ -140,8 +121,7 @@ resource "aws_eks_cluster" "aniket" {
   vpc_config {
     subnet_ids = [
       data.aws_subnet.private_a.id,
-      data.aws_subnet.private_b.id,
-      data.aws_subnet.private_c.id
+      data.aws_subnet.private_b.id
     ]
 
     security_group_ids      = [data.aws_security_group.devops_sg.id]
@@ -159,7 +139,7 @@ resource "aws_eks_cluster" "aniket" {
 }
 
 ############################
-# NODE GROUP (multi-AZ)
+# NODE GROUP (STABLE)
 ############################
 resource "aws_eks_node_group" "node_group" {
   cluster_name    = aws_eks_cluster.aniket.name
@@ -168,17 +148,18 @@ resource "aws_eks_node_group" "node_group" {
 
   subnet_ids = [
     data.aws_subnet.private_a.id,
-    data.aws_subnet.private_b.id,
-    data.aws_subnet.private_c.id
+    data.aws_subnet.private_b.id
   ]
 
   scaling_config {
-    desired_size = 3
-    max_size     = 6
-    min_size     = 2
+    desired_size = 1
+    max_size     = 2
+    min_size     = 1
   }
 
-  instance_types = ["c7i-flex.large"]
+  instance_types = ["c7i-flex.large"]  # ✅ your choice
+
+  disk_size = 20  # ✅ added as requested
 
   remote_access {
     ec2_ssh_key               = var.ssh_key_name
