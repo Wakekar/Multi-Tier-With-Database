@@ -17,8 +17,7 @@ output "vpc_id" {
 output "subnet_ids" {
   value = [
     data.aws_subnet.private_a.id,
-    data.aws_subnet.private_b.id,
-    data.aws_subnet.private_c.id
+    data.aws_subnet.private_b.id
   ]
 }
 
